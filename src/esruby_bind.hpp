@@ -20,7 +20,6 @@
 #include "js_object.hpp"
 #include "js_function.hpp"
 #include "ruby_object_backend.hpp"
-#include "ruby_closure_backend.hpp"
 
 namespace ESRubyBind
 {

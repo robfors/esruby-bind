@@ -2,75 +2,62 @@ ESRubyBind = class
 {
 }
 
+
 ESRubyBind.RubyObject = class
 {
+  
   constructor(backend)
   {
-    var handlers = {
-      get(target, key)
-      {
-        switch (key)
-        {
-        case "esruby_bind_class":
-          return ESRubyBind.RubyObject;
-        case "esruby_bind_backend":
-          return target.backend;
-        case "forget":
-          return (function () {target.backend.delete();});
-        default:
-          key = String(key);
-          return target.backend.get(key);
-        }
-      },
-      set(target, key, new_value)
-      {
-        key = String(key);
-        target.backend.set(key, new_value);
-      }
-    };
+    var handlers = ESRubyBind.RubyObject;
     var target = {};
     target.backend = backend;
     var wrapper = new Proxy(target, handlers);
     return wrapper;
   }
+  
+  static get(target, key)
+  {
+    switch (key)
+    {
+    case "esruby_bind_class":
+      return ESRubyBind.RubyObject;
+    case "esruby_bind_backend":
+      return target.backend;
+    case "forget":
+      return (function () {target.backend.delete();});
+    default:
+      var method_name_symbol = new ESRubyBind.RubySymbol(key);
+      return target.backend.send("method", [method_name_symbol]);
+    }
+  }
+  
+  static set(target, key, new_value)
+  {
+    var method_name = String(key);
+    method_name += "=";
+    return target.backend.send(method_name, [new_value]);
+  }
+  
 }
 
 
-ESRubyBind.RubyClosure = class
+ESRubyBind.RubyClosure = class extends ESRubyBind.RubyObject
 {
+  
   constructor(backend)
   {
-    var handlers = {
-      apply(target, this_argument, argument_list)
-      {
-        return target.backend.apply(this_argument, argument_list);
-      },
-      get(target, key)
-      {
-        switch (key)
-        {
-        case "esruby_bind_class":
-          return ESRubyBind.RubyClosure;
-        case "esruby_bind_backend":
-          return target.backend;
-        case "forget":
-          return (function () {target.backend.delete();});
-        default:
-          var key = String(key);
-          return target.backend.get(key);
-        }
-      },
-      set(target, key, new_value)
-      {
-        var key = String(key);
-        target.backend.set(key, new_value);
-      }
-    };
+    var handlers = ESRubyBind.RubyClosure;
     var target = new Function;
     target.backend = backend;
     var wrapper = new Proxy(target, handlers);
     return wrapper;
   }
+  
+  static apply(target, this_argument, argument_list)
+  {
+    return target.backend.send("call", argument_list);
+  }
+  
 }
 
 
@@ -93,7 +80,7 @@ ESRubyBind.RubySymbol = class
   
   get value()
   {
-    this._value;
+    return this._value;
   }
 }
 
@@ -110,7 +97,7 @@ ESRubyBind.RubyInteger = class
   
   get value()
   {
-    this._value;
+    return this._value;
   }
 }
 
@@ -127,7 +114,7 @@ ESRubyBind.RubyFloat = class
   
   get value()
   {
-    this._value;
+    return this._value;
   }
 }
 

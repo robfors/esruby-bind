@@ -82,21 +82,18 @@ namespace ESRubyBind
     
     // ruby Method
     // ruby Proc
+    // ruby Object
     RClass* ruby_method_class = mrb_class_get(mrb, "Method");
     RClass* ruby_proc_class = mrb_class_get(mrb, "Proc");
     mrb_bool is_method_object = mrb_obj_is_kind_of(mrb, ruby_object, ruby_method_class);
     mrb_bool is_proc_object = mrb_obj_is_kind_of(mrb, ruby_object, ruby_proc_class);
-    if (is_method_object || is_proc_object)
-    {
-      RubyClosureBackend cpp_object = RubyClosureBackend(mrb, ruby_object);
-      emscripten::val js_class = emscripten::val::global()["ESRubyBind"]["RubyClosure"];
-      js_object = js_class.new_(emscripten::val(cpp_object));
-      return js_object;
-    }
-    
-    // ruby Object
     RubyObjectBackend cpp_object = RubyObjectBackend(mrb, ruby_object);
-    emscripten::val js_class = emscripten::val::global()["ESRubyBind"]["RubyObject"];
+    emscripten::val js_class = emscripten::val::undefined();
+    if (is_method_object || is_proc_object)
+      js_class = emscripten::val::global()["ESRubyBind"]["RubyClosure"];
+    else
+      js_class = emscripten::val::global()["ESRubyBind"]["RubyObject"];
+    
     js_object = js_class.new_(emscripten::val(cpp_object));
     return js_object;
   }
@@ -156,7 +153,7 @@ namespace ESRubyBind
     if (js_object.instanceof(js_class))
     {
       std::string cpp_object = js_object["value"].as<std::string>();
-      ruby_object = mrb_symbol_value(mrb_intern(mrb, cpp_object.c_str(), cpp_object.length()));
+      ruby_object = mrb_str_new(mrb, cpp_object.c_str(), cpp_object.length());
       return ruby_object;
     }
     
@@ -182,18 +179,8 @@ namespace ESRubyBind
     
     
     // ruby closure
-    if (js_object["esruby_bind_class"] == emscripten::val::global()["ESRubyBind"]["RubyClosure"])
-    {
-      RubyClosureBackend cpp_object = js_object["esruby_bind_backend"].as<RubyClosureBackend>();
-      // TODO: we could support of passing around objects belonging to different esruby instances 
-      if (mrb != cpp_object.mrb())
-        mrb_raise(mrb, E_ARGUMENT_ERROR, "RubyClosureBackend belongs to different esruby instance.");
-      ruby_object = cpp_object.ruby_object();
-      return ruby_object;
-    }
-    
     // ruby Object
-    if (js_object["esruby_bind_class"] == emscripten::val::global()["ESRubyBind"]["RubyObject"])
+    if (js_object["esruby_bind_backend"] != emscripten::val::undefined())
     {
       RubyObjectBackend cpp_object = js_object["esruby_bind_backend"].as<RubyObjectBackend>();
       // TODO: we could support of passing around objects belonging to different esruby instances 

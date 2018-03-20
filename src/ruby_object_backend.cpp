@@ -28,76 +28,45 @@ namespace ESRubyBind
     return _ruby_self;
   }
   
-  emscripten::val RubyObjectBackend::get(emscripten::val js_key)
+  emscripten::val RubyObjectBackend::send(emscripten::val js_method_name, emscripten::val js_args)
   {
-    if (!js_key.isString())
+    if (!js_method_name.isString())
     {
-      printf("'js_key' must be a string\n");
-      throw std::invalid_argument("'js_key' must be a string");
+      printf("'method_name' must be a string\n");
+      throw std::invalid_argument("'method_name' must be a string");
     }
-    std::string cpp_key = js_key.as<std::string>();
-    if (cpp_key.empty())
+    std::string cpp_method_name = js_method_name.as<std::string>();
+    if (cpp_method_name.empty())
     {
-      printf("'js_key' must not be empty\n");
-      throw std::invalid_argument("'js_key' must not be empty");
+      printf("'method_name' must not be empty\n");
+      throw std::invalid_argument("'method_name' must not be empty");
     }
-    bool is_constant = std::isupper(cpp_key[0]);
-    mrb_value ruby_key = mrb_symbol_value(mrb_intern(_mrb, cpp_key.c_str(), cpp_key.length()));
+    if (!js_args.isArray())
+    {
+      printf("'args' must be an array\n");
+      throw std::invalid_argument("'args' must be an array");
+    }
+    
+    emscripten::val js_arg = emscripten::val::undefined();
+    mrb_int arg_count = js_args["length"].as<mrb_int>();
+    std::vector<mrb_value> ruby_args;
+    
+    ruby_args.push_back(js_object_to_ruby_object(_mrb, js_method_name));
+    for (mrb_int i = 0; i < arg_count; i++)
+    {
+      js_arg = js_args.call<emscripten::val>("shift");
+      ruby_args.push_back(js_object_to_ruby_object(_mrb, js_arg));
+    }
     
     mrb_value ruby_return;
-    if (is_constant)
-    {
-      if (mrb_respond_to(_mrb, _ruby_self, mrb_intern_lit(_mrb, "const_get")))
-      {
-        ruby_return = mrb_funcall(_mrb, _ruby_self, "const_get", 1, ruby_key);
-      }
-      else
-      {
-        printf("Error: Can not get a constant from that object.\n");
-        throw std::invalid_argument("Error: Can not get a constant from that object.");
-      }
-    }
-    else
-      ruby_return = mrb_funcall(_mrb, _ruby_self, "method", 1, ruby_key);
+    ruby_return = mrb_funcall_argv(_mrb, _ruby_self, mrb_intern_lit(_mrb, "send"), ruby_args.size(), ruby_args.data());
     
     if (_mrb->exc)
     {
       // Error
       mrb_print_error(_mrb);
       _mrb->exc = 0;
-      throw std::runtime_error();
-    }
-    
-    emscripten::val js_return = ruby_obj_to_js_object(_mrb, ruby_return);
-    return js_return;
-  }
-  
-  emscripten::val RubyObjectBackend::set(emscripten::val js_key, emscripten::val js_new_value)
-  {
-    if (!js_key.isString())
-    {
-      printf("'js_key' must be a string\n");
-      throw std::invalid_argument("'js_key' must be a string");
-    }
-    std::string cpp_key = js_key.as<std::string>();
-    if (cpp_key.empty())
-    {
-      printf("'js_key' must not be empty\n");
-      throw std::invalid_argument("'js_key' must not be empty");
-    }
-    cpp_key += "=";
-    
-    mrb_value ruby_new_value = js_object_to_ruby_object(_mrb, js_new_value);
-    
-    mrb_sym ruby_key = mrb_intern(_mrb, cpp_key.c_str(), cpp_key.length());
-    mrb_value ruby_return = mrb_funcall_argv(_mrb, _ruby_self, ruby_key, 1, &ruby_new_value);
-    
-    if (_mrb->exc)
-    {
-      // Error
-      mrb_print_error(_mrb);
-      _mrb->exc = 0;
-      throw std::runtime_error();
+      throw std::runtime_error("");
     }
     
     emscripten::val js_return = ruby_obj_to_js_object(_mrb, ruby_return);
@@ -107,8 +76,7 @@ namespace ESRubyBind
   EMSCRIPTEN_BINDINGS(ruby_object_backend)
   {
     emscripten::class_<RubyObjectBackend>("RubyObjectBackend")
-      .function("get", &RubyObjectBackend::get)
-      .function("set", &RubyObjectBackend::set)
+      .function("send", &RubyObjectBackend::send)
     ;
   }
 

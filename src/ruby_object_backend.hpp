@@ -32,8 +32,7 @@ namespace ESRubyBind
     ~RubyObjectBackend();
     mrb_state* mrb();
     mrb_value ruby_object();
-    emscripten::val get(emscripten::val js_key);
-    emscripten::val set(emscripten::val js_key, emscripten::val js_new_value);
+    emscripten::val send(emscripten::val js_method_name, emscripten::val js_args);
     
     protected:
     
