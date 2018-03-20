@@ -65,7 +65,7 @@ namespace ESRubyBind
       // Error
       mrb_print_error(_mrb);
       _mrb->exc = 0;
-      return emscripten::val::undefined();
+      throw std::runtime_error();
     }
     
     emscripten::val js_return = ruby_obj_to_js_object(_mrb, ruby_return);
@@ -97,7 +97,7 @@ namespace ESRubyBind
       // Error
       mrb_print_error(_mrb);
       _mrb->exc = 0;
-      return emscripten::val::undefined();
+      throw std::runtime_error();
     }
     
     emscripten::val js_return = ruby_obj_to_js_object(_mrb, ruby_return);
