@@ -46,7 +46,17 @@ namespace ESRubyBind
     
     mrb_value ruby_return;
     if (is_constant)
-      ruby_return = mrb_funcall(_mrb, _ruby_self, "const_get", 1, ruby_key);
+    {
+      if (mrb_respond_to(_mrb, _ruby_self, mrb_intern_lit(_mrb, "const_get")))
+      {
+        ruby_return = mrb_funcall(_mrb, _ruby_self, "const_get", 1, ruby_key);
+      }
+      else
+      {
+        printf("Error: Can not get a constant from that object.\n");
+        throw std::invalid_argument("Error: Can not get a constant from that object.");
+      }
+    }
     else
       ruby_return = mrb_funcall(_mrb, _ruby_self, "method", 1, ruby_key);
     
@@ -75,22 +85,12 @@ namespace ESRubyBind
       printf("'js_key' must not be empty\n");
       throw std::invalid_argument("'js_key' must not be empty");
     }
-    bool is_constant = std::isupper(cpp_key[0]);
+    cpp_key += "=";
     
     mrb_value ruby_new_value = js_object_to_ruby_object(_mrb, js_new_value);
     
-    mrb_value ruby_return;
-    if (is_constant)
-    {
-      mrb_sym ruby_key = mrb_intern(_mrb, cpp_key.c_str(), cpp_key.length());
-      ruby_return = mrb_funcall(_mrb, _ruby_self, "const_set", 2, ruby_key, ruby_new_value);
-    }
-    else
-    {
-      cpp_key += "=";
-      mrb_sym ruby_key = mrb_intern(_mrb, cpp_key.c_str(), cpp_key.length());
-      ruby_return = mrb_funcall_argv(_mrb, _ruby_self, ruby_key, 1, &ruby_new_value);
-    }
+    mrb_sym ruby_key = mrb_intern(_mrb, cpp_key.c_str(), cpp_key.length());
+    mrb_value ruby_return = mrb_funcall_argv(_mrb, _ruby_self, ruby_key, 1, &ruby_new_value);
     
     if (_mrb->exc)
     {
