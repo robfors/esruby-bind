@@ -156,7 +156,7 @@ namespace ESRubyBind
     if (js_object.instanceof(js_class))
     {
       std::string cpp_object = js_object["value"].as<std::string>();
-      ruby_object = mrb_str_new(mrb, cpp_object.c_str(), cpp_object.length());
+      ruby_object = mrb_symbol_value(mrb_intern(mrb, cpp_object.c_str(), cpp_object.length()));
       return ruby_object;
     }
     
