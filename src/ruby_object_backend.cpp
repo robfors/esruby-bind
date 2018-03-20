@@ -36,9 +36,19 @@ namespace ESRubyBind
       throw std::invalid_argument("'js_key' must be a string");
     }
     std::string cpp_key = js_key.as<std::string>();
+    if (cpp_key.empty())
+    {
+      printf("'js_key' must not be empty\n");
+      throw std::invalid_argument("'js_key' must not be empty");
+    }
+    bool is_constant = std::isupper(cpp_key[0]);
     mrb_value ruby_key = mrb_symbol_value(mrb_intern(_mrb, cpp_key.c_str(), cpp_key.length()));
     
-    mrb_value ruby_method = mrb_funcall(_mrb, _ruby_self, "method", 1, ruby_key);
+    mrb_value ruby_return;
+    if (is_constant)
+      ruby_return = mrb_funcall(_mrb, _ruby_self, "const_get", 1, ruby_key);
+    else
+      ruby_return = mrb_funcall(_mrb, _ruby_self, "method", 1, ruby_key);
     
     if (_mrb->exc)
     {
@@ -48,7 +58,7 @@ namespace ESRubyBind
       return emscripten::val::undefined();
     }
     
-    emscripten::val js_return = ruby_obj_to_js_object(_mrb, ruby_method);
+    emscripten::val js_return = ruby_obj_to_js_object(_mrb, ruby_return);
     return js_return;
   }
   
@@ -60,12 +70,27 @@ namespace ESRubyBind
       throw std::invalid_argument("'js_key' must be a string");
     }
     std::string cpp_key = js_key.as<std::string>();
-    cpp_key += "=";
-    mrb_sym ruby_key = mrb_intern(_mrb, cpp_key.c_str(), cpp_key.length());
+    if (cpp_key.empty())
+    {
+      printf("'js_key' must not be empty\n");
+      throw std::invalid_argument("'js_key' must not be empty");
+    }
+    bool is_constant = std::isupper(cpp_key[0]);
     
     mrb_value ruby_new_value = js_object_to_ruby_object(_mrb, js_new_value);
+    
     mrb_value ruby_return;
-    ruby_return = mrb_funcall_argv(_mrb, _ruby_self, ruby_key, 1, &ruby_new_value);
+    if (is_constant)
+    {
+      mrb_sym ruby_key = mrb_intern(_mrb, cpp_key.c_str(), cpp_key.length());
+      ruby_return = mrb_funcall(_mrb, _ruby_self, "const_set", 2, ruby_key, ruby_new_value);
+    }
+    else
+    {
+      cpp_key += "=";
+      mrb_sym ruby_key = mrb_intern(_mrb, cpp_key.c_str(), cpp_key.length());
+      ruby_return = mrb_funcall_argv(_mrb, _ruby_self, ruby_key, 1, &ruby_new_value);
+    }
     
     if (_mrb->exc)
     {
