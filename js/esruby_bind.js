@@ -26,16 +26,39 @@ ESRubyBind.RubyObject = class
     case "forget":
       return (function () {target.backend.delete();});
     default:
-      var method_name_symbol = new ESRubyBind.RubySymbol(key);
-      return target.backend.send("method", [method_name_symbol]);
+      var name = String(key);
+      var is_constant = (name[0] !== name[0].toLowerCase());
+      if (is_constant)
+      {
+        if (target.backend.send("respond_to?", ["const_get"]))
+          return target.backend.send("const_get", [name]);
+        else
+          throw "Error: Can not get a constant from that object.";
+      }
+      else
+      {
+        var name_symbol = new ESRubyBind.RubySymbol(name);
+        return target.backend.send("method", [name_symbol]);
+      }
     }
   }
   
   static set(target, key, new_value)
   {
-    var method_name = String(key);
-    method_name += "=";
-    return target.backend.send(method_name, [new_value]);
+    var name = String(key);
+    var is_constant = (name[0] !== name[0].toLowerCase());
+    if (is_constant)
+    {
+      if (target.backend.send("respond_to?", ["const_set"]))
+        return target.backend.send("const_set", [name, new_value]);
+      else
+        throw "Error: Can not set a constant from that object.";
+    }
+    else
+    {
+      name += "=";
+      return target.backend.send(name, [new_value]);
+    }
   }
   
 }
