@@ -1,37 +1,121 @@
 # ESRuby Bind
 *ESRuby* gem to bind ruby and java script environments together when runing the *ESRuby* interpreter.
-# Example
-app.rb
-```
-window.document.title = "test123"
 
-callback1 = Proc.new do
+# Examples
+
+## get and set js object properties
+*ruby:*
+```
+JavaScript.document.title = "test"
+```
+
+## call ruby methods
+*ruby:*
+```
+def m
+  55
+end
+```
+*java script:*
+```
+Ruby.m();
+```
+
+## call js function
+*java script:*
+```
+echo = function (obj) {return obj};
+```
+*ruby:*
+```
+puts JavaScript.echo("test")
+```
+
+## set a ruby callback
+*ruby:*
+```
+callback = Proc.new do
   puts "time_up"
 end
-window.setTimeout(callback1, 3000)
 
-callback2 = Proc.new do |number|
-  window.echo { number + 5 }
+JavaScript.setTimeout(callback, 3000)
+```
+
+## block is passed as a js function
+*java script:*
+```
+function test(arg1, arg2, func)
+{
+  console.log(func(arg1));
+};
+```
+*ruby:*
+```
+JavaScript.test(1, 'a') do |arg|
+  puts "callback:#{arg}"
 end
-window.callback2 = callback2
+```
 
+## access global js namespace
+*java script:*
+```
+class A {}; // note: A does not belong to window/global
+B = class {}; // B can be found in window/global
+```
+*ruby:*
+```
+a_class = JavaScript.A
+
+JavaScript.B
+# or
+window.B
+
+window.C = a_class
+```
+
+## access global ruby namespace
+*ruby:*
+```
 class A
   attr_accessor :yy
-  def tt
+  
+  def self.aa
+    44
+  end
+  
+  def aa
     55
   end
+
 end
-window.A = A
+```
+*java script:*
+```
+Ruby.A.aa();
+Ruby.A.new().aa();
+
+a = Ruby.A.new();
+a.yy = 66;
+a.yy; // => function
+a.yy(); // => 66
 ```
 
-
-app.js
+## access ruby constants
+*ruby:*
 ```
-echo = function (f) {return f()}
-callback2(3) // => 8
+class A
+  class B
+    def bb
+      55
+    end
+  end
+end
+```
+*java script:*
+```
+B = Ruby.A.B;
+b = B.new();
+b.bb(); // => 55
 
-a = A.new()
-a.tt() // => 55
-a.yy = "test"
-a.yy() // => "test"
+B.C = "test";
 ```
