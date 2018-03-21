@@ -234,6 +234,9 @@ namespace ESRubyBind
     ruby_module = mrb_define_module(mrb, "ESRubyBind");
     mrb_define_class_method(mrb, ruby_module, "global", global, MRB_ARGS_NONE());
     
+    ruby_js_module = mrb_define_module(mrb, "JavaScript");
+    mrb_define_class_method(mrb, ruby_js_module, "get", JavaScript::get, MRB_ARGS_REQ(1));
+    
     ruby_js_object_class = mrb_define_class_under(mrb, ruby_module, "JSObject", mrb->object_class);
     mrb_define_class_method(mrb, ruby_js_object_class, "build", JSObject::build, MRB_ARGS_NONE());
     mrb_define_method(mrb, ruby_js_object_class, "get", JSObject::get, MRB_ARGS_REQ(1));

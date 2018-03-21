@@ -13,6 +13,7 @@ MRuby::Gem::Specification.new('esruby-bind') do |spec|
   end
   
   spec.rbfiles << "#{dir}/mrblib/esruby_bind.rb"
+  spec.rbfiles << "#{dir}/mrblib/java_script.rb"
   spec.rbfiles << "#{dir}/mrblib/monkey_patch.rb"
   spec.rbfiles << "#{dir}/mrblib/esruby_bind/js_object.rb"
   spec.rbfiles << "#{dir}/mrblib/esruby_bind/js_function.rb"

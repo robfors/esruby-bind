@@ -17,6 +17,7 @@
 #include <mruby/variable.h>
 #include <new>
 
+#include "java_script.hpp"
 #include "js_object.hpp"
 #include "js_function.hpp"
 #include "ruby_object_backend.hpp"
@@ -25,6 +26,7 @@ namespace ESRubyBind
 {
 
   RClass* ruby_module;
+  RClass* ruby_js_module;
   RClass* ruby_js_object_class;
   RClass* ruby_js_function_class;
   
