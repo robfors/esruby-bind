@@ -119,3 +119,28 @@ b.bb(); // => 55
 
 B.C = "test";
 ```
+# Memory Management
+* JavaScript objects passed to Ruby: When the ruby object that references the js object is collected by ruby's gc, it will be released and eventually collected by the js gc. There is no need to do anything special.
+* Ruby ojbects passed to JavaScript: JavaScript does not currently supply finalizers or weak references. This project had been designed around the assumption that js finalizers will one day be available. Until then any objects must be explicitly destroyed with `delete()` to prevent memory leaks.
+
+Demo:
+
+*ruby:*
+```
+def some_method
+  []
+end
+```
+*java script:*
+```
+// bad: memory leak
+array = Ruby.some_method();
+array.delete();
+
+// good
+// lets break it down
+func = Ruby.some_method;
+array = func();
+func.delete();
+array.delete();
+```
