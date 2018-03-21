@@ -1,5 +1,5 @@
 # ESRuby Bind
-*ESRuby* gem to bind ruby and java script environments together when runing the *ESRuby* interpreter.
+*ESRuby* gem to bind ruby and java script environments together when runing the [*ESRuby*](https://github.com/robfors/esruby) interpreter.
 
 # Examples
 
