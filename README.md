@@ -5,35 +5,35 @@
 
 ## get and set js object properties
 *ruby:*
-```
+```ruby
 JavaScript.document.title = "test"
 ```
 
 ## call ruby methods
 *ruby:*
-```
+```ruby
 def m
   55
 end
 ```
 *java script:*
-```
+```javascript
 Ruby.m();
 ```
 
 ## call js function
 *java script:*
-```
+```javascript
 echo = function (obj) {return obj};
 ```
 *ruby:*
-```
+```ruby
 puts JavaScript.echo("test")
 ```
 
 ## set a ruby callback
 *ruby:*
-```
+```ruby
 callback = Proc.new do
   puts "time_up"
 end
@@ -43,14 +43,14 @@ JavaScript.setTimeout(callback, 3000)
 
 ## block is passed as a js function
 *java script:*
-```
+```javascript
 function test(arg1, arg2, func)
 {
   console.log(func(arg1));
 };
 ```
 *ruby:*
-```
+```ruby
 JavaScript.test(1, 'a') do |arg|
   puts "callback:#{arg}"
 end
@@ -58,12 +58,12 @@ end
 
 ## access global js namespace
 *java script:*
-```
+```javascript
 class A {}; // note: A does not belong to window/global
 B = class {}; // B can be found in window/global
 ```
 *ruby:*
-```
+```ruby
 a_class = JavaScript.A
 
 JavaScript.B
@@ -75,7 +75,7 @@ window.C = a_class
 
 ## access global ruby namespace
 *ruby:*
-```
+```ruby
 class A
   attr_accessor :yy
   
@@ -90,7 +90,7 @@ class A
 end
 ```
 *java script:*
-```
+```javascript
 Ruby.A.aa();
 Ruby.A.new().aa();
 
@@ -102,7 +102,7 @@ a.yy(); // => 66
 
 ## access ruby constants
 *ruby:*
-```
+```ruby
 class A
   class B
     def bb
@@ -112,7 +112,7 @@ class A
 end
 ```
 *java script:*
-```
+```javascript
 B = Ruby.A.B;
 b = B.new();
 b.bb(); // => 55
@@ -126,13 +126,13 @@ B.C = "test";
 Demo:
 
 *ruby:*
-```
+```ruby
 def some_method
   []
 end
 ```
 *java script:*
-```
+```javascript
 // bad: memory leak
 array = Ruby.some_method();
 array.delete();
