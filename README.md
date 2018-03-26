@@ -5,7 +5,7 @@ You can use the *ESRuby* gem to bind Ruby and JavaScript environments together w
 Using this gem, any kind of object can be passed between the Ruby and JavaScript environments. Even though both languages are object-oriented and appeared similar at first, throughout the development of this project, I learned to how differently they truly are. As such, I have made many assumptions on how these languages should interact with each other to keep the interface simple for the majority of use cases.
 
 ## Global Namespace
-Let's start by assessing each languages global namespace. The JavaScript namespace can be assessed in Ruby by using the `JavaScript` object.
+Let's start by assessing each language's global namespace. The JavaScript namespace can be assessed in Ruby using the `JavaScript` object.
 
 *JavaScript:*
 ```js
@@ -13,9 +13,9 @@ a = "hello";
 ```
 *Ruby:*
 ```ruby
-JavaScript.a #=> "hello"
+JavaScript.a # => "hello"
 ```
-We could also access this variable with the Ruby `window` or `global` objects, but consider it's limitation.
+We could also access this variable with the Ruby `window` or `global` objects, but consider their limitation.
 
 *JavaScript:*
 ```js
@@ -25,16 +25,43 @@ class C {};
 ```
 *Ruby:*
 ```ruby
-window.a #=> 1
-window.B #=> Nil
-window.C #=> Nil
-JavaScript.B #=> 2
-JavaScript.C #=> JSFunction
+window.a # => 1
+window.B # => Nil
+window.C # => Nil
+JavaScript.B # => 2
+JavaScript.C # => JSFunction
 ```
 Here we observe that when constants and classes are defined the way they were, they do not belong to the global namespace.
 
 ## Primitive Data Types
-When basic data types are passed between languages, to their new environment, they are converted into their closest possible counterpart. Unfortunately this will sometimes mean information about the object will be lost when a one to one conversion does not exist, such as passing a Ruby `Integer` or `Float` and getting a JavaScript `Number` for both. When you really must pass a specific type of primitive object you can build the object from one of the placeholder classes that have been included. For example, if you needed to pass a Ruby `Symbol` to ruby you could build the object in JavaScript.
+When basic data types are passed between languages, to the new environment, they are converted into their closest possible counterpart. Unfortunately this will sometimes mean information about the object will be lost when a one to one conversion does not exist. Lets try passing a Ruby `Integer` and `Float` to JavaScript.
+
+*Ruby:*
+```ruby
+a = 1
+b = 1.0
+```
+*JavaScript:*
+```js
+a = Ruby.a // => Number: 1
+a // was this an Integer or Float?
+b = Ruby.b // => Number: 1
+b // was this an Integer or Float?
+```
+What about the reciprocal problem?
+*Ruby:*
+```ruby
+def give_me_a_float(float)
+  raise 'error: not a float' unless float.is_a(Float)
+  # ...
+end
+```
+*JavaScript:*
+```js
+Ruby.give_me_a_float(1.0)
+```
+
+When you really must pass a specific type of primitive object you can build the object from one of the placeholder classes that have been included. For example, if you needed to pass a Ruby `Symbol` to ruby you could build the object in JavaScript.
 
 ```js
 var ruby_symbol = new ESRuby.RubySymbol("symbol")
