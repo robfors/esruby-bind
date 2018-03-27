@@ -1,11 +1,19 @@
-# ESRuby Bind
-You can use the *ESRuby* gem to bind Ruby and JavaScript environments together when runing the [*ESRuby*](https://github.com/robfors/esruby) interpreter.
+# esruby-bind
+You can use the *esruby-bind* gem to bind Ruby and JavaScript environments together when runing the [*ESRuby*](https://github.com/robfors/esruby) interpreter.
 
-# How To Use (work in progress)
-Using this gem, any kind of object can be passed between the Ruby and JavaScript environments. Even though both languages are object-oriented and appeared similar at first, throughout the development of this project, I learned to how differently they truly are. As such, I have made many assumptions on how these languages should interact with each other to keep the interface simple for the majority of use cases.
+# Walkthrough
+To demonstrate what this gem does and how it works, lets walkthrough some examples. Using this gem, any kind of object can be passed between the Ruby and JavaScript environments. Even though both languages are object-oriented and appeared similar at first, throughout the development of this project, I learned to how differently they truly are. As such, I have made many assumptions on how these languages should interact with each other to keep the interface simple for the majority of use cases.
+
+## Setup
+If you want to follow along with this walkthrough, you will need to first install *ESRuby* and create a new project. For each of the following examples you will need to place the code snippets in their respective files, keeping in mind their order. We will start in the `app` directory, directly under the project directory. We will need to ensure the files `app.rb`, `prepend.js` and `append.js` exist. Ruby code will obviously go in `app.rb`. JavaScript code written before the Ruby code will be placed in `prepend.js` and code after will go in `append.js`. Back in the project directory, we will edit `config.rb` to ensure it will correctly include all the files. The `config.rb` will need to have the lines
+```ruby
+  conf.add_ruby_source 'app/app.rb'  
+  conf.add_prepended_js_source 'app/prepend.js'
+  conf.add_appended_js_source 'app/append.js'
+```
 
 ## Global Namespace
-Let's start by assessing each language's global namespace. The JavaScript namespace can be assessed in Ruby using the `JavaScript` object.
+The first step in using this gem will be accessing each environment's global namespace. Let's start by assessing the JavaScript namespace from Ruby with the `JavaScript` object.
 
 *JavaScript:*
 ```js
@@ -15,7 +23,7 @@ a = "hello";
 ```ruby
 JavaScript.a # => "hello"
 ```
-We could also access this variable with the Ruby `window` or `global` objects, but consider their limitation.
+This gem also exposes exposes the `window` or `global` objects in the Ruby namespace. You can use them instead, but consider their limitation.
 
 *JavaScript:*
 ```js
@@ -26,15 +34,26 @@ class C {};
 *Ruby:*
 ```ruby
 window.a # => 1
-window.B # => Nil
-window.C # => Nil
+window.B # => nil
+window.C # => nil
 JavaScript.B # => 2
-JavaScript.C # => JSFunction
+JavaScript.C # => JavaScript::JSFunction
 ```
-Here we observe that when constants and classes are defined the way they were, they do not belong to the global namespace.
+Here, we observe that when constants and classes are defined the way they were, they belong to JavaScript's global namespace, not in it's `window` or `global` objects.
+
+In a similar manner we can access the Ruby namespace from JavaScript with `Ruby`.
+
+*Ruby:*
+```ruby
+a = 1
+```
+*JavaScript:*
+```js
+Ruby.a; // => 1
+```
 
 ## Primitive Data Types
-When basic data types are passed between languages, to the new environment, they are converted into their closest possible counterpart. Unfortunately this will sometimes mean information about the object will be lost when a one to one conversion does not exist. Lets try passing a Ruby `Integer` and `Float` to JavaScript.
+When basic data types are passed between environments, they get converted into their closest possible counterpart. Unfortunately this will sometimes mean information about the object will get lost when a one to one conversion does not exist. Lets try passing a Ruby `Integer` and `Float` to JavaScript.
 
 *Ruby:*
 ```ruby
@@ -43,31 +62,44 @@ b = 1.0
 ```
 *JavaScript:*
 ```js
-a = Ruby.a // => Number: 1
-a // was this an Integer or Float?
-b = Ruby.b // => Number: 1
-b // was this an Integer or Float?
+a = Ruby.a; // => Number: 1
+a; // was this a Ruby Integer or Float?
+b = Ruby.b; // => Number: 1
+b; // was this a Ruby Integer or Float?
 ```
-What about the reciprocal problem?
+Also consider the reciprocal problem.
+
 *Ruby:*
 ```ruby
 def give_me_a_float(float)
-  raise 'error: not a float' unless float.is_a(Float)
+  raise 'not a float' unless float.is_a(Float)
   # ...
+  nil
 end
 ```
 *JavaScript:*
 ```js
-Ruby.give_me_a_float(1.0)
+Ruby.give_me_a_float(1.1); // => null
+Ruby.give_me_a_float(1); // => Exception: 'not a float'
+Ruby.give_me_a_float(1.0); // => Exception: 'not a float'
 ```
+The first call worked because a JavaScript number with a fractional part, like `1.1`, will be converted into a Ruby `Float`. Nothing complicated there. The second call fails as expected. During the third call, however, we realize the limitations of relying on the automatic conversion of objects. In JavaScript, `1` and `1.0` are the same object, as JavaScript only has one number type, `Number`. As the number `1` does not have a fractional part, *esruby-bind* will assume that the number was meant to be a Ruby `Integer`. When you need to pass a specific type of primitive object you can build the object a placeholder class. In Ruby we have `JavaScript::Undefined`. In JavaScript we have `ESRubyBind.RubyInteger`, `ESRubyBind.RubyFloat` and `ESRubyBind.RubySymbol`. Lets retry that last example.
 
-When you really must pass a specific type of primitive object you can build the object from one of the placeholder classes that have been included. For example, if you needed to pass a Ruby `Symbol` to ruby you could build the object in JavaScript.
-
+*Ruby:*
+```ruby
+def give_me_a_float(float)
+  raise 'not a float' unless float.is_a(Float)
+  # ...
+  nil
+end
+```
+*JavaScript:*
 ```js
-var ruby_symbol = new ESRuby.RubySymbol("symbol")
+float_number = new ESRuby.RubyFloat(1.0);
+Ruby.give_me_a_float(float_number); // => null
 ```
-Also, if you are not familiar with the diffrenece between JavaScript primitives and their object counterparts, I would sugest reading up on it [here](https://javascriptweblog.wordpress.com/2010/09/27/the-secret-life-of-javascript-primitives/).
 
+Finaly, if you are not familiar with the diffrenece between JavaScript primitives and their object counterparts, I would sugest reading up on it [here](https://javascriptweblog.wordpress.com/2010/09/27/the-secret-life-of-javascript-primitives/).
 
 ## Inconvertible Data Types
 The remainder of the objects you may pass are not converted. Instead, a wrapper is made and passed. These wrapper objects will give you access to all the native objects’ methods or properties.
@@ -87,18 +119,21 @@ The following table summarizes the conversion of objects passed between environm
 
 | Ruby object               |     | JavaScript object        |
 |---------------------------|-----|--------------------------|
-| `Nil`                     | <-> | `null`                   |
-| `Nil`                     | <-  | `undefined`              |
-| `ESRubyBind::JSUndefined` |  -> | `undefined`              |
-| `False`                   | <-> | `false`                  |
-| `True`                    | <-> | `true`                   |
+| `nil`                     | <-> | `null`                   |
+| `nil`                     | <-  | `undefined`              |
+| `JavaScript::Undefined`   |  -> | `undefined`              |
+| `false`                   | <-> | `false`                  |
+| `true`                    | <-> | `true`                   |
 | `Integer`, `Float`        | <-> | number primitive         |
-| `String`, `Symbol`        |  -> | string primitive         |
-| `String`                  | <-  | string primitive         |
+| `Integer`                 | <-  | `ESRubyBind.RubyInteger` |
+| `Float`                   | <-  | `ESRubyBind.RubyFloat`   |
+| `String`                  | <-> | string primitive         |
+| `Symbol`                  |  -> | string primitive         |
+| `Symbol`                  | <-  | `ESRubyBind.RubySymbol`  |
 | `Proc`, `Method`          | <-> | `ESRubyBind.RubyClosure` |
-| `ESRubyBind::JSFunction`  | <-> | `Function`               |
+| `JavaScript::Function`    | <-> | `Function`               |
 | any other object          | <-> | `ESRubyBind.RubyObject`  |
-| `ESRubyBind::JSObject`    | <-> | any other object         |
+| `JavaScript::Object`      | <-> | any other object         |
 
 
 # Examples
