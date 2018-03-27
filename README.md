@@ -1,8 +1,8 @@
 # esruby-bind
-You can use the *esruby-bind* gem to bind Ruby and JavaScript environments together when runing the [*ESRuby*](https://github.com/robfors/esruby) interpreter.
+You can use the *esruby-bind* gem to bind Ruby and JavaScript environments together when runing the [*ESRuby*](https://github.com/robfors/esruby) interpreter. Using this gem, any kind of object can be passed between the Ruby and JavaScript environments. Even though both languages are object-oriented and appeared similar at first, throughout the development of this project, I learned to how differently they truly are. As such, I have made many assumptions on how these languages should interact with each other to keep the interface simple for the majority of use cases.
 
 # Walkthrough
-To demonstrate what this gem does and how it works, lets walkthrough some examples. Using this gem, any kind of object can be passed between the Ruby and JavaScript environments. Even though both languages are object-oriented and appeared similar at first, throughout the development of this project, I learned to how differently they truly are. As such, I have made many assumptions on how these languages should interact with each other to keep the interface simple for the majority of use cases.
+To demonstrate what this gem does and how it works, let's walkthrough some examples. 
 
 ## Setup
 If you want to follow along with this walkthrough, you will need to first install *ESRuby* and create a new project. For each of the following examples you will need to place the code snippets in their respective files, keeping in mind their order. We will start in the `app` directory, directly under the project directory. We will need to ensure the files `app.rb`, `prepend.js` and `append.js` exist. Ruby code will obviously go in `app.rb`. JavaScript code written before the Ruby code will be placed in `prepend.js` and code after will go in `append.js`. Back in the project directory, we will edit `config.rb` to ensure it will correctly include all the files. The `config.rb` will need to have the lines
@@ -111,10 +111,10 @@ If not, it will get the property and check it’s type. In the special case of t
 
 
 ## Ruby Constatnts
-notes to self: add complexity
+notes to self: adds complexity
 
 
-
+## Conversion Table
 The following table summarizes the conversion of objects passed between environments:
 
 | Ruby object               |     | JavaScript object        |
