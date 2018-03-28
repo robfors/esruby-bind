@@ -22,7 +22,13 @@ a = "hello";
 *Ruby:*
 ```ruby
 JavaScript.a # => "hello"
+JavaScript.b = 1
 ```
+*JavaScript:*
+```js
+b; // => 1
+```
+
 This gem also exposes exposes the `window` or `global` objects in the Ruby namespace. You can use them instead, but consider their limitation.
 
 *JavaScript:*
@@ -50,7 +56,9 @@ a = 1
 *JavaScript:*
 ```js
 Ruby.a; // => 1
+Ruby.b = 2; // Exception
 ```
+TODO: more about the last exception
 
 ## Primitive Data Types
 When basic data types are passed between environments, they get converted into their closest possible counterpart. Unfortunately this will sometimes mean information about the object will get lost when a one to one conversion does not exist. Lets try passing a Ruby `Integer` and `Float` to JavaScript.
