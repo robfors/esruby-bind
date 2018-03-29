@@ -59,7 +59,7 @@ namespace ESRubyBind
     RClass* ruby_class;
     
     // JSUndefined
-    ruby_class = mrb_class_get_under(mrb, ruby_module, "JSUndefined");
+    ruby_class = mrb_class_get_under(mrb, ruby_js_module, "Undefined");
     if (mrb_obj_is_kind_of(mrb, ruby_object, ruby_class))
     {
       js_object = emscripten::val::undefined();
@@ -72,7 +72,7 @@ namespace ESRubyBind
     
     // JSFunction
     // JSObject
-    ruby_class = mrb_class_get_under(mrb, ruby_module, "JSObject");
+    ruby_class = mrb_class_get_under(mrb, ruby_js_module, "Object");
     if (mrb_obj_is_kind_of(mrb, ruby_object, ruby_class))
     {
       mrb_value ruby_object_reference = mrb_iv_get(mrb, ruby_object, mrb_intern_lit(mrb, "@emscripten_val"));
@@ -220,31 +220,21 @@ namespace ESRubyBind
     return ruby_object;
   }
   
-  
-  mrb_value global(mrb_state* mrb, mrb_value ruby_self)
-  {
-    emscripten::val js_global = emscripten::val::global();
-    mrb_value ruby_global = js_object_to_ruby_object(mrb, js_global);
-    return ruby_global;
-  }
-  
-  
   void initialize_gem(mrb_state* mrb)
   {
-    ruby_module = mrb_define_module(mrb, "ESRubyBind");
-    mrb_define_class_method(mrb, ruby_module, "global", global, MRB_ARGS_NONE());
-    
     ruby_js_module = mrb_define_module(mrb, "JavaScript");
-    mrb_define_class_method(mrb, ruby_js_module, "get", JavaScript::get, MRB_ARGS_REQ(1));
+    mrb_define_class_method(mrb, ruby_js_module, "eval", JavaScript::eval, MRB_ARGS_REQ(1));
     
-    ruby_js_object_class = mrb_define_class_under(mrb, ruby_module, "JSObject", mrb->object_class);
+    ruby_js_object_class = mrb_define_class_under(mrb, ruby_js_module, "Object", mrb->object_class);
     mrb_define_class_method(mrb, ruby_js_object_class, "build", JSObject::build, MRB_ARGS_NONE());
     mrb_define_method(mrb, ruby_js_object_class, "get", JSObject::get, MRB_ARGS_REQ(1));
     mrb_define_method(mrb, ruby_js_object_class, "set", JSObject::set, MRB_ARGS_REQ(2));
     
-    ruby_js_function_class = mrb_define_class_under(mrb, ruby_module, "JSFunction", ruby_js_object_class);
+    ruby_js_function_class = mrb_define_class_under(mrb, ruby_js_module, "Function", ruby_js_object_class);
     mrb_define_method(mrb, ruby_js_function_class, "new", JSFunction::new_, MRB_ARGS_ANY());
     mrb_define_method(mrb, ruby_js_function_class, "invoke_with_context", JSFunction::invoke_with_context, MRB_ARGS_REQ(1)|MRB_ARGS_ANY());
+    
+    (void)RubyBackend(); // only needed for EMSCRIPTEN_BINDINGS to work
   }
   
   

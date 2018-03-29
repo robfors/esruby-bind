@@ -25,8 +25,7 @@ namespace ESRubyBind
   namespace JavaScript
   {
   
-    mrb_value get(mrb_state* mrb, mrb_value ruby_self);
-    mrb_value set(mrb_state* mrb, mrb_value ruby_self);
+    mrb_value eval(mrb_state* mrb, mrb_value ruby_self);
     
   };
   

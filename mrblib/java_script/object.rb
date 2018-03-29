@@ -1,6 +1,7 @@
-module ESRubyBind
-  class JSObject
-  
+module JavaScript
+  class Object
+    include ObjectBase
+    
     def self.from(ruby_object)
       create(ruby_object)
     end
@@ -28,14 +29,6 @@ module ESRubyBind
       # strictlyEquals(const val& v)
     end
     
-    def [](key)
-      get(key)
-    end
-    
-    def []=(key, value)
-      set(key, value)
-    end
-    
     #def get(key) # -- c definition --
     #  ...
     #end
@@ -44,28 +37,8 @@ module ESRubyBind
     #  ...
     #end
     
-    def call(key, *args)
-      get(key).invoke_with_context(self, *args)
-    end
-    
-    def method_missing(method_name, *arguments, &block)
-      method_name = method_name.to_s
-      match = /^(?<key>[^=]+)(?<assignment>=?)$/.match(method_name)
-      super unless match
-      key = match[:key]
-      is_assignment = !match[:assignment].empty?
-      arguments << block if block_given?
-      if is_assignment
-        set(key, arguments.first)
-      else
-        property = get(key)
-        if property.is_a?(JSFunction)
-          property.invoke_with_context(self, *arguments)
-        else
-          raise "no arguments can be passed to getter" if arguments.any?
-          property
-        end
-      end
+    def this_context
+      self
     end
     
     def typeof

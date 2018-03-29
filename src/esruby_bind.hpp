@@ -20,12 +20,13 @@
 #include "java_script.hpp"
 #include "js_object.hpp"
 #include "js_function.hpp"
+#include "ruby_backend.hpp"
 #include "ruby_object_backend.hpp"
+
 
 namespace ESRubyBind
 {
 
-  RClass* ruby_module;
   RClass* ruby_js_module;
   RClass* ruby_js_object_class;
   RClass* ruby_js_function_class;
@@ -35,10 +36,8 @@ namespace ESRubyBind
   
   emscripten::val ruby_obj_to_js_object(mrb_state* mrb, mrb_value ruby_object);
   mrb_value js_object_to_ruby_object(mrb_state* mrb, emscripten::val js_object);
-  mrb_value global(mrb_state* mrb, mrb_value ruby_self);
   void initialize_gem(mrb_state* mrb);
   void finalize_gem(mrb_state* mrb);
-  
 }
 
 extern "C"

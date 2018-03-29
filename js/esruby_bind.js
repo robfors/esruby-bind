@@ -1,5 +1,11 @@
 ESRubyBind = class
 {
+  
+  static eval(...args)
+  {
+    return Module.RubyBackend.eval(...args);
+  }
+  
 }
 
 
@@ -50,18 +56,61 @@ ESRubyBind.RubyObject = class
     if (is_constant)
     {
       if (target.backend.send("respond_to?", ["const_set"]))
-        return target.backend.send("const_set", [name, new_value]);
+        target.backend.send("const_set", [name, new_value]);
       else
         throw "Error: Can not set a constant from that object.";
     }
     else
     {
       name += "=";
-      return target.backend.send(name, [new_value]);
+      target.backend.send(name, [new_value]);
     }
+    return true;
   }
   
 }
+
+
+ESRubyBind._Ruby = class
+{
+  
+  constructor()
+  {
+    var handlers = ESRubyBind._Ruby;
+    var target = {};
+    var wrapper = new Proxy(target, handlers);
+    return wrapper;
+  }
+  
+  static get(target, key)
+  {
+    switch (key)
+    {
+    case "eval":
+      return ESRubyBind.eval;
+    default:
+      var name = String(key);
+      return Ruby.eval(name);
+    }
+  }
+  
+  static set(target, key, new_value)
+  {
+    var name = String(key);
+    var is_constant = (name[0] !== name[0].toLowerCase());
+    if (is_constant)
+      Ruby.Object[key] = new_value;
+    else
+    {
+      Ruby.ESRubyBind.global_object_to_set = new_value;
+      Module.RubyBackend.vm_run(name + "= ESRubyBind.global_object_to_set");
+      Ruby.ESRubyBind.global_object_to_set = null;
+    }
+    return true;
+  }
+  
+}
+Ruby = new ESRubyBind._Ruby;
 
 
 ESRubyBind.RubyClosure = class extends ESRubyBind.RubyObject

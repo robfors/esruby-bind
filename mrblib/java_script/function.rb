@@ -1,5 +1,5 @@
-module ESRubyBind
-  class JSFunction < JSObject
+module JavaScript
+  class Function < Object
   
     #def new(*args) # -- c definition --
       # new_

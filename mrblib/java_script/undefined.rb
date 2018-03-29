@@ -1,5 +1,5 @@
-module ESRubyBind
-  class JSUndefined
+module JavaScript
+  class Undefined
   
     def self.create
       new

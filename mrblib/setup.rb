@@ -1,1 +1,0 @@
-ESRubyBind.global.Ruby = Object

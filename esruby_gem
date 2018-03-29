@@ -1,6 +1,5 @@
 ESRuby::Gem::Specification.new do |spec|
 
   spec.add_prepended_js_source "#{File.dirname(__FILE__)}/js/esruby_bind.js"
-  #spec.add_appended_js_sources 'app/app.js'
 
 end

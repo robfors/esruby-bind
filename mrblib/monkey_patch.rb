@@ -1,13 +1,9 @@
-module Kernel
+def window
+  JavaScript.window
+end
 
-  def window
-    ESRubyBind.window
-  end
-  
-  def global
-    ESRubyBind.global
-  end
-  
+def global
+  JavaScript.global
 end
 
 
@@ -19,7 +15,7 @@ end
 class Hash
 
   def to_js
-    ESRubyBind::JSObject.from(self)
+    JavaScript::Object.from(self)
   end
   
 end
