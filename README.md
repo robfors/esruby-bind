@@ -5,7 +5,7 @@ You can use the *esruby-bind* gem to bind Ruby and JavaScript environments toget
 To demonstrate what this gem does and how it works, let's walkthrough some examples. 
 
 ## Setup
-If you want to follow along with this walkthrough, you will need to first install *esruby* and create a new project. For each of the following examples you will need to place the code snippets in their respective files, keeping in mind their order. We will start in the `app` directory, directly under the project directory. We will need to ensure the files `app.rb`, `prepend.js` and `append.js` exist. Ruby code will obviously go in `app.rb`. JavaScript code written before the Ruby code will be placed in `prepend.js` and code after will go in `append.js`. Back in the project directory, we will edit `config.rb` to ensure it will correctly include all the files. The `config.rb` will need to have the lines
+If you want to follow along with this walkthrough, you will need to first install *esruby* and create a new project. For each of the following examples you will need to place the code snippets in their respective files, keeping in mind their order. We will start with three empty files, `app.rb`, `prepend.js` and `append.js` in the `app` directory. Any Ruby code from each example will obviously go in `app.rb`. JavaScript code that is executed before the Ruby code will be placed in `prepend.js` and code after will go in `append.js`. Back in the project directory, we will edit `config.rb` to ensure it includes all three files with
 ```ruby
   conf.add_ruby_source 'app/app.rb'  
   conf.add_prepended_js_source 'app/prepend.js'
@@ -13,22 +13,21 @@ If you want to follow along with this walkthrough, you will need to first instal
 ```
 
 ## Global Namespace
-The first step in using this gem will be accessing each environment's global namespace. Let's start by assessing the JavaScript namespace from Ruby with the `JavaScript` object.
+We will start the walkthrough by accessing each environment's opposing global namespace. Let's start by assessing the JavaScript namespace from Ruby with the `JavaScript` object.
 
-*JavaScript:*
 ```js
+// --- JavaScript ---
 a = "hello";
 ```
-*Ruby:*
 ```ruby
+# --- Ruby ---
 JavaScript.a # => "hello"
 JavaScript.b = 1
 ```
-*JavaScript:*
 ```js
+// --- JavaScript ---
 b; // => 1
 ```
-
 This gem also exposes exposes the `window` or `global` objects in the Ruby namespace. You can use them instead, but consider their limitation.
 
 *JavaScript:*
