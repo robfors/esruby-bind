@@ -30,14 +30,14 @@ b; // => 1
 ```
 This gem also exposes exposes the `window` or `global` objects in the Ruby namespace. You can use them instead, but consider their limitation.
 
-*JavaScript:*
 ```js
+// --- JavaScript ---
 a = 1;
 const B = 2;
 class C {};
 ```
-*Ruby:*
 ```ruby
+# --- Ruby ---
 window.a # => 1
 window.B # => nil
 window.C # => nil
@@ -48,12 +48,12 @@ Here, we observe that when constants and classes are defined the way they were, 
 
 In a similar manner we can access the Ruby namespace from JavaScript with `Ruby`.
 
-*Ruby:*
 ```ruby
+# --- Ruby ---
 a = 1
 ```
-*JavaScript:*
 ```js
+// --- JavaScript ---
 Ruby.a; // => 1
 Ruby.b = 2; // Exception
 ```
@@ -62,13 +62,13 @@ TODO: more about the last exception
 ## Primitive Data Types
 When basic data types are passed between environments, they get converted into their closest possible counterpart. Unfortunately this will sometimes mean information about the object will get lost when a one to one conversion does not exist. Lets try passing a Ruby `Integer` and `Float` to JavaScript.
 
-*Ruby:*
 ```ruby
+# --- Ruby ---
 a = 1
 b = 1.0
 ```
-*JavaScript:*
 ```js
+// --- JavaScript ---
 a = Ruby.a; // => Number: 1
 a; // was this a Ruby Integer or Float?
 b = Ruby.b; // => Number: 1
@@ -76,32 +76,32 @@ b; // was this a Ruby Integer or Float?
 ```
 Also consider the reciprocal problem.
 
-*Ruby:*
 ```ruby
+# --- Ruby ---
 def give_me_a_float(float)
   raise 'not a float' unless float.is_a(Float)
   # ...
   nil
 end
 ```
-*JavaScript:*
 ```js
+// --- JavaScript ---
 Ruby.give_me_a_float(1.1); // => null
 Ruby.give_me_a_float(1); // => Exception: 'not a float'
 Ruby.give_me_a_float(1.0); // => Exception: 'not a float'
 ```
 The first call worked because a JavaScript number with a fractional part, like `1.1`, will be converted into a Ruby `Float`. Nothing complicated there. The second call fails as expected. During the third call, however, we realize the limitations of relying on the automatic conversion of objects. In JavaScript, `1` and `1.0` are the same object, as JavaScript only has one number type, `Number`. As the number `1` does not have a fractional part, *esruby-bind* will assume that the number was meant to be a Ruby `Integer`. When you need to pass a specific type of primitive object you can build the object a placeholder class. In Ruby we have `JavaScript::Undefined`. In JavaScript we have `ESRubyBind.RubyInteger`, `ESRubyBind.RubyFloat` and `ESRubyBind.RubySymbol`. Lets retry that last example.
 
-*Ruby:*
 ```ruby
+# --- Ruby ---
 def give_me_a_float(float)
   raise 'not a float' unless float.is_a(Float)
   # ...
   nil
 end
 ```
-*JavaScript:*
 ```js
+// --- JavaScript ---
 float_number = new ESRuby.RubyFloat(1.0);
 Ruby.give_me_a_float(float_number); // => null
 ```
