@@ -15,7 +15,7 @@ If you want to follow along with this walkthrough, you will need to first instal
 ## Global Namespace
 We will start the walkthrough by accessing each environment's opposing global namespace. Let's start by assessing the JavaScript namespace from Ruby with the `JavaScript` object.
 
-```js
+```javascript
 // --- JavaScript ---
 a = "hello";
 ```
@@ -24,13 +24,13 @@ a = "hello";
 JavaScript.a # => "hello"
 JavaScript.b = 1
 ```
-```js
+```javascript
 // --- JavaScript ---
 b; // => 1
 ```
 This gem also exposes exposes the `window` or `global` objects in the Ruby namespace. We can use them instead, but consider their limitation.
 
-```js
+```javascript
 // --- JavaScript ---
 a = 1;
 const B = 2;
@@ -52,7 +52,7 @@ In a similar manner we can access the Ruby namespace from JavaScript with `Ruby`
 # --- Ruby ---
 a = 1
 ```
-```js
+```javascript
 // --- JavaScript ---
 Ruby.a; // => 1
 Ruby.b = 2;
@@ -72,7 +72,7 @@ end
 def Bb
 end
 ```
-```js
+```javascript
 // --- JavaScript ---
 Ruby.Aa; // => ESRubyBind.RubyObject
 Ruby.Bb; // => Exception
@@ -92,7 +92,7 @@ class A
 end
 a = A.new
 ```
-```js
+```javascript
 // --- JavaScript ---
 Ruby.A.B = 1;
 Ruby.a.B = 1; // => Exception
@@ -106,7 +106,7 @@ When basic data types are passed between environments, they get converted into t
 a = 1
 b = 1.0
 ```
-```js
+```javascript
 // --- JavaScript ---
 a = Ruby.a; // => Number: 1
 a; // was this a Ruby Integer or Float?
@@ -123,7 +123,7 @@ def give_me_a_float(float)
   nil
 end
 ```
-```js
+```javascript
 // --- JavaScript ---
 Ruby.give_me_a_float(1.1); // => null
 Ruby.give_me_a_float(1); // => Exception: 'not a float'
@@ -139,7 +139,7 @@ def give_me_a_float(float)
   true
 end
 ```
-```js
+```javascript
 // --- JavaScript ---
 float_number = new ESRuby.RubyFloat(1.0);
 Ruby.give_me_a_float(float_number); // => true
@@ -152,7 +152,7 @@ The remainder of the object types we may pass are not converted, instead, a wrap
 
 ### Passing JavaScript Objects
 Passing a JavaScript Function to Ruby will generate a `JavaScript::Function` wrapper. All other objects will generate a `JavaScript::Object` wrapper.
-```js
+```javascript
 // --- JavaScript ---
 a = {};
 b = function (){ return true; };
@@ -166,7 +166,7 @@ JavaScript.get('b') # => JavaScript::Function
 ### JavaScript Object Properties
 We can access the native JavaScript object's properties from both wrappers. When we get or set a property from Ruby, Ruby’s `method_missing` will kick in to catch the request and complete the request internally and one of three things will happen. If it sees that the method we are calling ends with `=`, it will assume we are setting the property. If not, it will get the property value and check it's type. If the property is a JavaScript `Function` it will assume we are invoking the method and pass along any arguments. If not, it will assume we are getting the property. Also keep in mind that if a block is given it will be passed as a JavaScript `RubyClosure` as the last argument. If we need more control over the call we can always call `get(key)`, `[key]`, `set(key, new_value)` or `[key] = new_value` on the object.
 
-```js
+```javascript
 // --- JavaScript ---
 obj = {};
 obj.a = 1;
@@ -177,20 +177,35 @@ obj.b = function (){ return true; };
 obj = JavaScript.obj
 obj.a # => 1
 obj.b # => true
-b = obj[:b]; # => JavaScript::Function
+b = obj[:b] # => JavaScript::Function
 b.c = 2;
 obj.d = 3;
 ```
-```js
+```javascript
 // --- JavaScript ---
 obj.b.c; // => 2
 obj.d; // => 3
 ```
+Now let's try passing a block.
+
+```javascript
+// --- JavaScript ---
+function a(b, c, func)
+{
+  return [b, c, func(3)];
+}
+```
+```ruby
+# --- Ruby ---
+JavaScript.test(1, 2) { |arg| arg } # => [1, 2, 3]
+```
+
 In the special case of the `JavaScript` object, getting a property will invoke JavaScript's `eval` function.
 
-### JavaScript Object Properties
+### Invoke JavaScript Function
 The `JavaScript::Function` wrapper also gives us the ability to invoke the native function with arguments and a context.
-```js
+
+```javascript
 // --- JavaScript ---
 function a(b, c)
 {
@@ -207,20 +222,92 @@ d = JavaScript.d
 a.invoke_with_context(d, 1, 2) # => [JavaScript::Object, 1, 2]
 ```
 
+### Ruby Methods
+It is important to keep in mind is the fundamental differences between Ruby and JavaScript objects in this next section. JavaScript objects have properties. Some of these properties may be function objects which can be invoked and exist on their own.
+
+```js
+var obj = {};
+obj.a = function (){ return true; };
+obj.a(); // => true
+a = obj.a;
+a; // => Function
+a(); // true
+```
+
+Now let's compare this to the Ruby world. Ruby objects only have methods, no properties. For this reason we are able to omit the round brackets when calling a method in Ruby. However, we must keep this distinction in mind when calling Ruby objects from JavaScript.
+
+```ruby
+# --- Ruby ---
+class A
+  def a
+    true
+  end
+end
+
+b = A.new
+```
+```javascript
+// --- JavaScript ---
+b = Ruby.b; // => ESRubyBind.RubyObject
+b.a; // => ESRubyBind.RubyClosure
+b.a(); // => true
+```
+Here, we see the `ESRubyBind.RubyObject` and `ESRubyBind.RubyClosure` wrappers passed from Ruby. Ruby objects of type `Proc` or `Method` will be converted into a `ESRubyBind.RubyClosure` wrapper, allowing us to invoke them in JavaScript at a later point in time with arguments. A `ESRubyBind.RubyClosure` wrapper is simply a native function object. Being such, let's use it to set a JavaScript callback from Ruby.
+
+```ruby
+# --- Ruby ---
+callback = Proc.new do
+  puts "How cool is this!"
+end
+
+JavaScript.setTimeout(callback, 3000)
+```
+ 
+ All other Ruby objects passed to JavaScript will be converted into a `ESRubyBind.RubyObject` wrapper. As we have seen many times, getting a property from the wrapper will return `ESRubyBind.RubyClosure` if we ask for a method or an `ESRubyBind.RubyObject` or other object if we ask for a constant. One notable exception of this behavior would be the `Ruby` object. It may also return top level local variables. Setting a property of the wrapper will call an assignment method or set a constant depending on the key.
+
+```ruby
+# --- Ruby ---
+class A
+  attr_accessor :a
+end
+
+b = A.new
+```
+```javascript
+// --- JavaScript ---
+b = Ruby.b;
+b.a; // => null
+b.a = 1;
+b.a; // => 1
+```
+
+### Other Cool Examples
+
+Set the page's title.
+```ruby
+# --- Ruby ---
+JavaScript.document.title = "hello world!"
+```
+
+By invoking the `new` method we can create class instances.
+```ruby
+# --- Ruby ---
+class A
+  def b
+    true
+  end
+end
+```
+```javascript
+// --- JavaScript ---
+A = Ruby.A;
+a = A.new();
+a.b(); // => true
+```
 
 
-
-
-
-
-
-
-
-
-
-
-## Conversion Table
-The following table summarizes the conversion of objects passed between environments:
+## Summery
+The following table summarizes the conversion of objects passed between environments.
 
 | Ruby object               |     | JavaScript object        |
 |---------------------------|-----|--------------------------|
@@ -240,124 +327,20 @@ The following table summarizes the conversion of objects passed between environm
 | any other object          | <-> | `ESRubyBind.RubyObject`  |
 | `JavaScript::Object`      | <-> | any other object         |
 
-
-# Examples
-
-## get and set js object properties
-*ruby:*
-```ruby
-JavaScript.document.title = "test"
-```
-
-## call ruby methods
-*ruby:*
-```ruby
-def m
-  55
-end
-```
-*java script:*
-```javascript
-Ruby.m();
-```
-
-## call js function
-*java script:*
-```javascript
-echo = function (obj) {return obj};
-```
-*ruby:*
-```ruby
-puts JavaScript.echo("test")
-```
-
-## set a ruby callback
-*ruby:*
-```ruby
-callback = Proc.new do
-  puts "time_up"
-end
-
-JavaScript.setTimeout(callback, 3000)
-```
-
-## block is passed as a js function
-*java script:*
-```javascript
-function test(arg1, arg2, func)
-{
-  console.log(func(arg1));
-};
-```
-*ruby:*
-```ruby
-JavaScript.test(1, 'a') do |arg|
-  puts "callback:#{arg}"
-end
-```
-
-
-
-## access global ruby namespace
-*ruby:*
-```ruby
-class A
-  attr_accessor :yy
-  
-  def self.aa
-    44
-  end
-  
-  def aa
-    55
-  end
-
-end
-```
-*java script:*
-```javascript
-Ruby.A.aa();
-Ruby.A.new().aa();
-
-a = Ruby.A.new();
-a.yy = 66;
-a.yy; // => function
-a.yy(); // => 66
-```
-
-## access ruby constants
-*ruby:*
-```ruby
-class A
-  class B
-    def bb
-      55
-    end
-  end
-end
-```
-*java script:*
-```javascript
-B = Ruby.A.B;
-b = B.new();
-b.bb(); // => 55
-
-B.C = "test";
-```
 # Memory Management
 * JavaScript objects passed to Ruby: When the ruby object that references the js object is collected by ruby's gc, it will be released and eventually collected by the js gc. There is no need to do anything special.
 * Ruby ojbects passed to JavaScript: JavaScript does not currently supply finalizers or weak references. This project had been designed around the assumption that js finalizers will one day be available. Until then any objects must be explicitly destroyed with `delete()` to prevent memory leaks.
 
 Demo:
 
-*ruby:*
 ```ruby
+# --- ruby ---
 def some_method
   []
 end
 ```
-*java script:*
 ```javascript
+// --- JavaScript ---
 // bad: memory leak
 array = Ruby.some_method();
 array.delete();
