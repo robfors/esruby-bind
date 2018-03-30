@@ -28,7 +28,7 @@ JavaScript.b = 1
 // --- JavaScript ---
 b; // => 1
 ```
-This gem also exposes exposes the `window` or `global` objects in the Ruby namespace. You can use them instead, but consider their limitation.
+This gem also exposes exposes the `window` or `global` objects in the Ruby namespace. We can use them instead, but consider their limitation.
 
 ```js
 // --- JavaScript ---
@@ -76,7 +76,7 @@ end
 // --- JavaScript ---
 Ruby.Aa; // => ESRubyBind.RubyObject
 Ruby.Bb; // => Exception
-// but why would you use sentence case for methods anyway?
+// but why would we use sentence case for methods anyway?
 
 Ruby.C = 1;
 ```
@@ -84,7 +84,7 @@ Ruby.C = 1;
 # --- Ruby ---
 C # => 1
 ```
-Also keep in mind that you can only define a constant under another constant.
+Also keep in mind that we can only define a constant under another constant.
 
 ```ruby
 # --- Ruby ---
@@ -113,7 +113,7 @@ a; // was this a Ruby Integer or Float?
 b = Ruby.b; // => Number: 1
 b; // was this a Ruby Integer or Float?
 ```
-Also, consider the reciprocal problem.
+Also consider the reciprocal problem.
 
 ```ruby
 # --- Ruby ---
@@ -129,7 +129,7 @@ Ruby.give_me_a_float(1.1); // => null
 Ruby.give_me_a_float(1); // => Exception: 'not a float'
 Ruby.give_me_a_float(1.0); // => Exception: 'not a float'
 ```
-The first call works because a JavaScript number with a fractional part, like `1.1`, will be converted into a Ruby `Float`. Nothing complicated here. The second call fails, also as expected. During the third call, however, we realize the limitations of relying on the automatic conversion of objects. In JavaScript, `1` and `1.0` are the same object, as JavaScript only has one number type, `Number`. As the number `1` does not have a fractional part, *esruby-bind* will assume that the number was meant to be a Ruby `Integer`. When you need to pass a specific type of primitive object, you can build the object from a placeholder class. In Ruby we have `JavaScript::Undefined`. In JavaScript we have `ESRubyBind.RubyInteger`, `ESRubyBind.RubyFloat` and `ESRubyBind.RubySymbol`. Lets retry that last example.
+The first call works because a JavaScript number with a fractional part, like `1.1`, will be converted into a Ruby `Float`. Nothing complicated here. The second call fails, also as expected. During the third call, however, we realize the limitations of relying on the automatic conversion of objects. In JavaScript, `1` and `1.0` are the same object, as JavaScript only has one number type, `Number`. As the number `1` does not have a fractional part, *esruby-bind* will assume that the number was meant to be a Ruby `Integer`. When we need to pass a specific type of primitive object, we can build the object from a placeholder class. In Ruby we have `JavaScript::Undefined`. In JavaScript we have `ESRubyBind.RubyInteger`, `ESRubyBind.RubyFloat` and `ESRubyBind.RubySymbol`. Lets retry that last example.
 
 ```ruby
 # --- Ruby ---
@@ -147,11 +147,71 @@ Ruby.give_me_a_float(float_number); // => true
 
 Finaly, if you are not familiar with the diffrenece between JavaScript primitives and their object counterparts, I would sugest reading up on it [here](https://javascriptweblog.wordpress.com/2010/09/27/the-secret-life-of-javascript-primitives/).
 
-## Inconvertible Data Types
-The remainder of the object types you may pass are not converted. Instead, a wrapper is generated and passed. These wrapper objects give you access to all the native objects' methods or properties.
-### Ruby To JavaScript
-If you try to get or set a property of a native JavaScript object from within Ruby, Ruby’s `method_missing` will kick in to catch the request and complete the request internally. If it sees that the method you are calling ends with `=` it will assume you are trying to set a property. 
-If not, it will get the property and check it’s type. In the special case of the Ruby `JavaScript` object, getting a property will invoke JavaScript’s `eval` function. If the property is a JavaScript `Function` it will call the function with any arguments passed, otherwise it will simply return the property. Also keep in mind that if a block is given it will be passed as a JavaScript `RubyClosure`. If you need more control over the call you can always call ‘get(key)’, ‘[key]’, ‘set(key, new_value)` or ‘[key] = new_value` on the object.
+## Complex Data Types
+The remainder of the object types we may pass are not converted, instead, a wrapper is generated and passed. These wrapper objects give us access to all the native objects' methods or properties.
+
+### Passing JavaScript Objects
+Passing a JavaScript Function to Ruby will generate a `JavaScript::Function` wrapper. All other objects will generate a `JavaScript::Object` wrapper.
+```js
+// --- JavaScript ---
+a = {};
+b = function (){ return true; };
+```
+```ruby
+# --- Ruby ---
+JavaScript.a # => JavaScript::Object
+JavaScript.get('b') # => JavaScript::Function
+```
+
+### JavaScript Object Properties
+We can access the native JavaScript object's properties from both wrappers. When we get or set a property from Ruby, Ruby’s `method_missing` will kick in to catch the request and complete the request internally and one of three things will happen. If it sees that the method we are calling ends with `=`, it will assume we are setting the property. If not, it will get the property value and check it's type. If the property is a JavaScript `Function` it will assume we are invoking the method and pass along any arguments. If not, it will assume we are getting the property. Also keep in mind that if a block is given it will be passed as a JavaScript `RubyClosure` as the last argument. If we need more control over the call we can always call `get(key)`, `[key]`, `set(key, new_value)` or `[key] = new_value` on the object.
+
+```js
+// --- JavaScript ---
+obj = {};
+obj.a = 1;
+obj.b = function (){ return true; };
+```
+```ruby
+# --- Ruby ---
+obj = JavaScript.obj
+obj.a # => 1
+obj.b # => true
+b = obj[:b]; # => JavaScript::Function
+b.c = 2;
+obj.d = 3;
+```
+```js
+// --- JavaScript ---
+obj.b.c; // => 2
+obj.d; // => 3
+```
+In the special case of the `JavaScript` object, getting a property will invoke JavaScript's `eval` function.
+
+### JavaScript Object Properties
+The `JavaScript::Function` wrapper also gives us the ability to invoke the native function with arguments and a context.
+```js
+// --- JavaScript ---
+function a(b, c)
+{
+  return [this, b, c];
+}
+
+d = {};
+```
+```ruby
+# --- Ruby ---
+a = JavaScript.get('a')
+a.invoke(1, 2) # => [nil, 1, 2]
+d = JavaScript.d
+a.invoke_with_context(d, 1, 2) # => [JavaScript::Object, 1, 2]
+```
+
+
+
+
+
+
 
 
 
