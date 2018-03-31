@@ -202,6 +202,20 @@ JavaScript.test(1, 2) { |arg| arg } # => [1, 2, 3]
 
 In the special case of the `JavaScript` object, getting a property will invoke JavaScript's `eval` function.
 
+One problem I stumbled upon that you may want to Keep in mind is that JavaScript classes are simply `Function` objects.
+```javascript
+// --- JavaScript ---
+class A {}
+```
+```ruby
+# --- Ruby ---
+JavaScript.A # => Exception
+# it will see A as a function and try to invoke it
+# we can fix this by getting the property manually
+JavaScript.get('A') # => JavaScript::Function
+```
+Unfortunately there is no way for *esruby-bind* to distinguish classes from functions.
+
 ### Invoke JavaScript Function
 The `JavaScript::Function` wrapper also gives us the ability to invoke the native function with arguments and a context.
 
@@ -226,6 +240,7 @@ a.invoke_with_context(d, 1, 2) # => [JavaScript::Object, 1, 2]
 It is important to keep in mind is the fundamental differences between Ruby and JavaScript objects in this next section. JavaScript objects have properties. Some of these properties may be function objects which can be invoked and exist on their own.
 
 ```js
+// --- JavaScript ---
 var obj = {};
 obj.a = function (){ return true; };
 obj.a(); // => true
@@ -262,8 +277,8 @@ end
 
 JavaScript.setTimeout(callback, 3000)
 ```
- 
- All other Ruby objects passed to JavaScript will be converted into a `ESRubyBind.RubyObject` wrapper. As we have seen many times, getting a property from the wrapper will return `ESRubyBind.RubyClosure` if we ask for a method or an `ESRubyBind.RubyObject` or other object if we ask for a constant. One notable exception of this behavior would be the `Ruby` object. It may also return top level local variables. Setting a property of the wrapper will call an assignment method or set a constant depending on the key.
+
+All other Ruby objects passed to JavaScript will be converted into a `ESRubyBind.RubyObject` wrapper. As we have seen many times, getting a property from one of these wrappers will return a `ESRubyBind.RubyClosure` if we ask for a method and return a `ESRubyBind.RubyObject` if we ask for a constant. One notable exception of this behavior would be the `Ruby` object, whitch can also return a top level local variable. Setting a property of a wrapper will call an assignment method or set a constant depending on the key.
 
 ```ruby
 # --- Ruby ---
@@ -281,7 +296,20 @@ b.a = 1;
 b.a; // => 1
 ```
 
-### Other Cool Examples
+Want to call a Ruby method containing a non-alphanumeric character? Just use the `send` method the same way you would in Ruby.
+
+```ruby
+# --- Ruby ---
+def open?(arg)
+  arg
+end
+```
+```javascript
+// --- JavaScript ---
+Ruby.send("open?", true); // => true
+```
+
+## Other Cool Examples
 
 Set the page's title.
 ```ruby
