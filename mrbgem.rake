@@ -2,7 +2,7 @@ MRuby::Gem::Specification.new('esruby-bind') do |spec|
   spec.license = 'MIT'
   spec.author  = 'Rob Fors'
   spec.summary = 'javascript interface'
-  spec.version = '0.1.0'
+  spec.version = '0.1.1'
 
   spec.add_dependency('mruby-regexp-pcre', :github => 'iij/mruby-regexp-pcre')
   spec.add_dependency('mruby-method')

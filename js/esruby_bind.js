@@ -90,7 +90,21 @@ ESRubyBind._Ruby = class
       return ESRubyBind.eval;
     default:
       var name = String(key);
-      return Ruby.eval(name);
+      var is_constant = (name[0] !== name[0].toLowerCase());
+      if (is_constant)
+      {
+        return Ruby.eval("Object")[name];
+      }
+      else
+      {
+        // i would rather try to get a local variable first but i can't
+        //   figure out how to do that yet
+        var method_exists = Ruby.Object.send("respond_to?", name);
+        if (method_exists)
+          return Ruby.Object[name];
+        else
+          return Ruby.eval(name); // try local variable
+      }
     }
   }
   
