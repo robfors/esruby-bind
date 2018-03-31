@@ -300,13 +300,13 @@ Want to call a Ruby method containing a non-alphanumeric character? Just use the
 
 ```ruby
 # --- Ruby ---
-def open?(arg)
-  arg
+def open?(a, b)
+  [a, b]
 end
 ```
 ```javascript
 // --- JavaScript ---
-Ruby.send("open?", true); // => true
+Ruby.send("open?", 1, 2); // => [1, 2]
 ```
 
 ## Other Cool Examples
