@@ -371,14 +371,14 @@ end
 // --- JavaScript ---
 // bad: memory leak
 array = Ruby.some_method();
-array.delete();
+array.forget();
 
 // good
 // lets break it down
 func = Ruby.some_method;
 array = func();
-func.delete();
-array.delete();
+func.forget();
+array.forget();
 ```
 
 # TODO
